@@ -117,3 +117,66 @@ describe("outputResults", () => {
     expect(callbackSpy).not.toHaveBeenCalled();
   });
 });
+
+describe("outputResults — internal links", () => {
+  let consoleLogSpy;
+
+  beforeEach(() => {
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
+  });
+
+  function makeInternalStore(entries) {
+    const InternalLink = require("../lib/InternalLink");
+    return entries.map(({ targetPath, exists }) => {
+      const link = new InternalLink(targetPath);
+      link.setExists(exists);
+      link.addPage("./src/index.md");
+      link.incrementLinkCount();
+      return link;
+    });
+  }
+
+  test("logs broken internal link at loggingLevel >= 1", () => {
+    const options = { ...defaults, internalLinks: "warn", loggingLevel: 1 };
+    const internalStore = makeInternalStore([{ targetPath: "/missing", exists: false }]);
+    outputResults([], options, internalStore);
+    expect(consoleLogSpy.mock.calls.some((c) => c[0].includes("Internal link is broken"))).toBe(true);
+  });
+
+  test("does not log broken internal link at loggingLevel 0", () => {
+    const options = { ...defaults, internalLinks: "warn", loggingLevel: 0 };
+    const internalStore = makeInternalStore([{ targetPath: "/missing", exists: false }]);
+    outputResults([], options, internalStore);
+    expect(consoleLogSpy).not.toHaveBeenCalled();
+  });
+
+  test("does not log existing internal links", () => {
+    const options = { ...defaults, internalLinks: "warn", loggingLevel: 3 };
+    const internalStore = makeInternalStore([{ targetPath: "/about", exists: true }]);
+    outputResults([], options, internalStore);
+    expect(consoleLogSpy.mock.calls.every((c) => !c[0].includes("Internal link is broken"))).toBe(true);
+  });
+
+  test("throws when internalLinks is 'error' and broken internal links exist", () => {
+    const options = { ...defaults, internalLinks: "error", loggingLevel: 1 };
+    const internalStore = makeInternalStore([{ targetPath: "/missing", exists: false }]);
+    expect(() => outputResults([], options, internalStore)).toThrow(
+      "broken internal links"
+    );
+  });
+
+  test("does not throw when internalLinks is 'warn'", () => {
+    const options = { ...defaults, internalLinks: "warn", loggingLevel: 1 };
+    const internalStore = makeInternalStore([{ targetPath: "/missing", exists: false }]);
+    expect(() => outputResults([], options, internalStore)).not.toThrow();
+  });
+
+  test("works without internalStore (backward compat)", () => {
+    const options = { ...defaults };
+    expect(() => outputResults([], options)).not.toThrow();
+  });
+});

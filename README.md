@@ -97,7 +97,7 @@ what you're doing, it's probably a good idea.
 
 ### (4. Set options)
 
-There are currently 7 possible keys to the optional `options` object passed
+There are currently 8 possible keys to the optional `options` object passed
 with `eleventyConfig.addPlugin()`:
 
 | Option                             | Default                                           | Accepted values                                                                                              | Description                          |
@@ -105,6 +105,7 @@ with `eleventyConfig.addPlugin()`:
 | [`forbidden`](#broken-redirect-and-forbidden)| `"warn"`                                          | `"warn"`, `"error"`                                                                                          | Whether to warn or throw an error    |
 | [`broken`](#broken-and-redirect)   | `"warn"`                                          | `"warn"`, `"error"`                                                                                          | (same as above)                      |
 | [`redirect`](#broken-and-redirect) | `"warn"`                                          | `"warn"`, `"error"`                                                                                          | (same as above)                      |
+| [`internalLinks`](#internallinks)  | `"off"`                                           | `"off"`, `"warn"`, `"error"`                                                                                 | Check internal links for existence   |
 | [`cacheDuration`](#cacheduration)  | `"1d"`                                            | [any value accepted](https://www.11ty.dev/docs/plugins/fetch/#change-the-cache-duration) by `eleventy-fetch` | Set the duration of the cache        |
 | [`loggingLevel`](#logginglevel)    | `2`                                               | Integer `0` (silent) to `3` (all)                                                                            | Set the logging level                |
 | [`excludeUrls`](#excludeurls)      | `['http://localhost*', 'https://localhost*']`     | Array of URL strings                                                                                         | Exclude specific URLs or wildcards   |
@@ -122,6 +123,7 @@ module.exports = (eleventyConfig) => {
     forbidden: "warn",
     redirect: "warn",
     broken: "warn",
+    internalLinks: "off",
     cacheDuration: "1d",
     loggingLevel: 2,
     excludeUrls: [],
@@ -131,7 +133,7 @@ module.exports = (eleventyConfig) => {
 };
 ```
 
-NOTE: If the `broken`, `redirect` or `forbidden` options are set to `error`, your
+NOTE: If the `broken`, `redirect`, `forbidden`, or `internalLinks` options are set to `error`, your
 build will not be successful if there are broken/redirected links!
 
 ---
@@ -145,6 +147,27 @@ build will not be successful if there are broken/redirected links!
 
 Whether to `warn` or `error` if broken, redirect or forbidden links are found. If `error`,
 builds will not succeed if any are found.
+
+### `internalLinks`
+
+- **Default: `"off"`**
+- Accepted: `"off"`, `"warn"`, or `"error"`
+
+Whether to check internal links for existence in the built output. When set to `"warn"` or
+`"error"`, the plugin will verify that every internal `<a href>` on each page resolves to a
+file in your output directory (e.g. `_site`). Links with explicit file extensions (e.g.
+`/feed.xml`) are checked for an exact match; extension-less links (e.g. `/about`) try
+`about.html` and `about/index.html`.
+
+**What counts as an internal link:** Any `href` that is not an external URL (`http://`,
+`https://`), not protocol-relative (`//`), not a URI scheme (`mailto:`, `tel:`, `javascript:`,
+etc.), and not a fragment-only link (`#section`). Both absolute (`/about`) and relative
+(`./contact`, `../blog`) hrefs are supported. Relative hrefs are resolved using the output
+path of the linking page, so `/about` and `../about` from different pages both resolve to
+the same target.
+
+> **Note:** Sites deployed under a path prefix (e.g. `/docs/`) are not currently supported
+> for internal link checking.
 
 ### `cacheDuration`
 

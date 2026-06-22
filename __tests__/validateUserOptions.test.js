@@ -74,4 +74,14 @@ describe("validateUserOptions", () => {
     expect(testFunc({ callback: [] })).toThrow();
     expect(testFunc({ callback: {} })).toThrow();
   });
+
+  test("internalLinks", () => {
+    expect(testFunc({ internalLinks: "off" })).not.toThrow();
+    expect(testFunc({ internalLinks: "warn" })).not.toThrow();
+    expect(testFunc({ internalLinks: "error" })).not.toThrow();
+    expect(testFunc({ internalLinks: "OFF" })).not.toThrow();
+    expect(testFunc({ internalLinks: "invalid" })).toThrow();
+    expect(testFunc({ internalLinks: 1 })).toThrow();
+    expect(testFunc({ internalLinks: true })).toThrow();
+  });
 });
