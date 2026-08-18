@@ -83,6 +83,35 @@ describe("resolveTargetPath", () => {
   });
 });
 
+describe("resolveTargetPath on Windows", () => {
+  // Regression test: previously, resolveTargetPath used the OS-native
+  // separator (path.sep) when slicing the site-relative path, so on Windows
+  // relative hrefs resolved to backslash-separated paths (e.g. "\about")
+  // instead of forward-slash site paths (e.g. "/about"), breaking dedup and
+  // internal link existence checks.
+  jest.resetModules();
+  const actualPath = jest.requireActual("path");
+  jest.doMock("path", () => actualPath.win32);
+  const {
+    resolveTargetPath: resolveTargetPathWin,
+  } = require("../lib/getInternalLinksFromPage");
+  const win32 = actualPath.win32;
+  const winOutputPath = win32.join("_site", "blog", "index.html");
+
+  afterAll(() => {
+    jest.dontMock("path");
+    jest.resetModules();
+  });
+
+  test("relative path uses forward slashes on Windows", () => {
+    expect(resolveTargetPathWin("./contact", winOutputPath, outputDir)).toBe("/blog/contact");
+  });
+
+  test("relative path going up one level uses forward slashes on Windows", () => {
+    expect(resolveTargetPathWin("../about", winOutputPath, outputDir)).toBe("/about");
+  });
+});
+
 const content = `<html>
 <body>
   <ul>
